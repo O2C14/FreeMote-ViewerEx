@@ -1,4 +1,9 @@
 emote立绘demo
+效果:
+
+![1](https://user-images.githubusercontent.com/70356077/206843012-23d23e39-c31a-4dbf-be5b-6738697ec385.png)
+![image](https://user-images.githubusercontent.com/70356077/206843099-0f0a1a85-ac28-4351-b7e6-a904a27ce638.png)
+
 # FreeMote
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/UlyssesWu/FreeMote?branch=master&svg=true)](https://ci.appveyor.com/project/UlyssesWu/freemote/build/artifacts)
 
