@@ -4,31 +4,43 @@
         Title="Project AZUSA © FreeMote Viewer"
         Width="1280"
         Height="720"
-        WindowStartupLocation="CenterScreen"
         Background="{StaticResource NekoHacksScene}"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Topmost="True"
+        Closing="Window_Closing"
         >
     <Grid>
         <Label Name="CenterMark" Content="+" HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" VerticalAlignment="Center" FontSize="24" Foreground="Gold" />
         <TextBlock Name="CharaCenterMark"  HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="20" Foreground="Red" Margin="0" Width="25" Height="28" Text="+" TextAlignment="Center"  />
-        <Grid>
+        <Grid x:Name="Grid1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="40"/>
+                <RowDefinition Height="17.76"/>
+                <RowDefinition Height="22.24"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="231"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Margin="2,2,0,0" Foreground="Silver" Opacity="0.5" FontSize="11" Tag="You are not allowed to remove this line according to License (BY)">Powered by FreeMote</TextBlock>
-            <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal">
-                <Button Width="60" HorizontalAlignment="Right" Content="Motion" Margin="0,5,5,5" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="GetTimelines"></Button>
-                <Button Width="60" HorizontalAlignment="Right" Content="Stop" Margin="0,5,5,5" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="Stop"></Button>
-                <Button Width="60" HorizontalAlignment="Right" Content="Clear" Margin="0,5,5,5" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="Clear"></Button>
+            <TextBlock Margin="0,2,0,0" Foreground="Silver" Opacity="0.5" FontSize="11" Tag="You are not allowed to remove this line according to License (BY)" HorizontalAlignment="Center" Width="992" Grid.RowSpan="2">Powered by FreeMote</TextBlock>
+            <StackPanel x:Name="Panel1" Grid.Row="0" Orientation="Horizontal" Grid.Column="1" Grid.RowSpan="2">
+                <Button x:Name="gua" Width="58" Content="挂件模式" Margin="0,5,5,5" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="Desktopmod"/>
+                <Button Width="36" Content="动作" Margin="0,5,5,5" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="GetTimelines"/>
+                <Button Width="60" HorizontalAlignment="Right" Content="停止动作" Margin="0,5,5,5" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="Stop"></Button>
+                <Button Width="60" HorizontalAlignment="Right" Content="清除动作" Margin="0,5,5,5" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="Clear"></Button>
+
             </StackPanel>
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Column="1"  Grid.Row="1" >
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Column="1"  Grid.Row="2" Foreground="#00000000" HorizontalAlignment="Left" Width="203" Margin="28,0,0,0" >
                 <StackPanel Name="MotionPanel" HorizontalAlignment="Right" Orientation="Vertical">
                 </StackPanel>
             </ScrollViewer>
+            <StackPanel x:Name="Panel2" Height="242" Margin="0,5,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="81" Grid.RowSpan="3" Opacity="0">
+                <Button Content="置顶" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="topmost" IsEnabled="False" Height="30"/>
+                <Button Content="隐藏按钮" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="TransparenButton" IsEnabled="False" Opacity="1" Height="30"/>
+                <Button Content="移动" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="Move" IsEnabled="False" Height="30"/>
+                <Button Content="保存坐标" Background="Transparent" Foreground="Green" BorderThickness="3" BorderBrush="DarkGreen" Click="SavePosition" IsEnabled="False" Height="30"/>
+            </StackPanel>
         </Grid>
     </Grid>
 

@@ -32,9 +32,13 @@ namespace FreeMote.Tools.Viewer
     {
         const float RefreshRate = 1000.0f / 65.0f; // 1/n秒カウントをmsへ変換。
         private const int Movement = 10;
-
         private static double _lastX, _lastY;
-        private static bool _leftMouseDown;
+        private static double _lastposX=0, _lastposY=0;
+        private static bool MotionisOn = false;
+        private static bool TransparenisOn = false;
+        private static bool _shiftdown;
+        private static bool canmove = false;
+        private static bool _leftMouseDown = false;
         private static bool _rightMouseDown = false;
         private static double _midX, _midY;
         private bool _mouseTrack = false;
@@ -69,7 +73,7 @@ namespace FreeMote.Tools.Viewer
             MouseMove += MainWindow_MouseMove;
             MouseWheel += MainWindow_MouseWheel;
             MouseDoubleClick += MainWindow_MouseDoubleClick;
-
+            //MouseLeftButtonDown += Window_MouseDown;
             KeyDown += OnKeyDown;
 
             // make a brush of the scene available as a resource on the window
@@ -85,6 +89,20 @@ namespace FreeMote.Tools.Viewer
             //Top = y1 - 600;
             // parse the XAML
             InitializeComponent();
+            try
+            {
+                //设置位置、大小
+                Rect restoreBounds = Properties.Settings.Default.MainRestoreBounds;
+                WindowState = WindowState.Normal;
+                Left = restoreBounds.Left;
+                Top = restoreBounds.Top;
+                //this.Width = restoreBounds.Width;
+                //this.Height = restoreBounds.Height;
+                //设置窗口状态
+                //this.WindowState = Properties.Settings.Default.MainWindowState;
+                //Console.WriteLine(Properties.Settings.Default.MainRestoreBounds);
+            }
+            catch { }
             Width = Core.Width;
             Height = Core.Height;
             //Topmost = true;
@@ -94,8 +112,13 @@ namespace FreeMote.Tools.Viewer
             _midY = Height / 2;
             CenterMark.Visibility = Visibility.Hidden;
             CharaCenterMark.Visibility = Visibility.Hidden;
-
+            //SizeChanged +=MainWindow_Resize;
+            //WindowStyle = ;
+            //AllowsTransparency = true;
             _emote = new Emote(_helper.EnsureHandle(), (int) Width, (int) Height, true);
+
+            //_emote = new Emote(_helper.EnsureHandle(), 1600, 900, true);
+            //void MainWindow_Resize(object sender, System.EventArgs e){//_emote = new Emote(_helper.EnsureHandle(),  (int) Height, (int) Width,true);}
             _emote.EmoteInit();
             
             if (_psbPaths.Count > 1)
@@ -112,6 +135,15 @@ namespace FreeMote.Tools.Viewer
             _player.SetVariable("fade_z", 256);
             _player.SetSmoothing(true);
             _player.Show();
+            try
+            {
+                int x = -(int)Properties.Settings.Default.X_Position;
+                int y = -(int) Properties.Settings.Default.Y_Position;
+                _player.OffsetScale(Properties.Settings.Default.zoom);
+                _player.OffsetCoord(-x,-y);
+                //Console.WriteLine(x);
+            }
+            catch { }
             
             if (Core.NeedRemoveTempFile)
             {
@@ -182,6 +214,14 @@ namespace FreeMote.Tools.Viewer
                     CharaCenterMark.Visibility = Visibility.Hidden;
                 }
             }
+            if (keyEventArgs.Key == Key.LeftShift)
+            {
+                if (keyEventArgs.IsDown)
+                {
+                    _shiftdown = !_shiftdown;
+                }
+
+            }
 
             await Task.Delay(20);
             UpdatePosition();
@@ -189,49 +229,88 @@ namespace FreeMote.Tools.Viewer
 
         void MainWindow_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (_measureMode)
+            if (!TransparenisOn)
             {
-                _player.SetScale(1f);
+                if (_measureMode)
+                {
+                    _player.SetScale(1f);
+                }
+                else if (!canmove)
+                {
+                    if (_shiftdown)
+                    {
+                        _player.OffsetScale(1 + ConvertDelta(e.Delta));
+                    }
+                    else
+                    {
+                        _player.OffsetScale(1 + ConvertDelta(e.Delta * 10));
+                        
+                    }
+                    //Console.WriteLine(_player.GetScale());
+                }
             }
-            else
-            {
-                _player.OffsetScale(1 + ConvertDelta(e.Delta));
-            }
-        }
+        }      
 
         void MainWindow_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.LeftButton == MouseButtonState.Pressed && e.GetPosition(MotionPanel).X < 0)
+            if(!canmove&& !TransparenisOn)
             {
-                var ex = e.GetPosition(this);
-                _player.OffsetCoord((int) (ex.X - _lastX), (int) (ex.Y - _lastY));
-                _lastX = ex.X;
-                _lastY = ex.Y;
-            }
-            else
-            {
-                var ex2 = e.GetPosition(this);
-                _lastX = ex2.X;
-                _lastY = ex2.Y;
-                if (!_measureMode)
+                if (e.LeftButton == MouseButtonState.Pressed && (e.GetPosition(MotionPanel).X < 0||!MotionisOn))
                 {
-                    if (_mouseTrack)
-                    {
-                        var ex = e.GetPosition(this);
-                        _deltaX = (ex.X - _midX) / _midX * 64;
-                        _deltaY = (ex.Y - _midY) / _midY * 64;
+                    
 
-                        float frameCount = 0f;
-                        //float frameCount = 50f;
-                        float easing = 0f;
-                        _player.SetVariable("head_UD", (float) _deltaY, frameCount, easing);
-                        _player.SetVariable("head_LR", (float) _deltaX, frameCount, easing);
-                        _player.SetVariable("body_UD", (float) _deltaY, frameCount, easing);
-                        _player.SetVariable("body_LR", (float) _deltaX, frameCount, easing);
-                        _player.SetVariable("face_eye_UD", (float) _deltaY, frameCount, easing);
-                        _player.SetVariable("face_eye_LR", (float) _deltaX, frameCount, easing);
+                    var ex = e.GetPosition(this);
+                    if (!_shiftdown)
+                    {
+                        ex.X *= 4;
+                        ex.Y *= 4;
+                    }
+                    _lastposX += (ex.X - _lastX);
+                    _lastposY += (ex.Y - _lastY);
+                    //Console.WriteLine("x:"+ _lastposX+ "y:"+ _lastposY);
+                    //Console.WriteLine("x:" + (ex.X - _lastX) + "y:" + (ex.Y - _lastY));
+                    _player.OffsetCoord((int) (ex.X - _lastX), (int) (ex.Y - _lastY));
+                    _lastX = ex.X;
+                    _lastY = ex.Y;
+                }
+                else
+                {
+                    var ex2 = e.GetPosition(this);
+                    if (!_shiftdown)
+                    {
+                        ex2.X *= 4;
+                        ex2.Y *= 4;
+                    }
+                    _lastX = ex2.X;
+                    _lastY = ex2.Y;
+                    if (!_measureMode)
+                    {
+                        if (_mouseTrack)
+                        {
+                            var ex = e.GetPosition(this);
+                            _deltaX = (ex.X - _midX) / _midX * 64;
+                            _deltaY = (ex.Y - _midY) / _midY * 64;
+
+                            float frameCount = 0f;
+                            //float frameCount = 50f;
+                            float easing = 0f;
+                            _player.SetVariable("head_UD", (float) _deltaY, frameCount, easing);
+                            _player.SetVariable("head_LR", (float) _deltaX, frameCount, easing);
+                            _player.SetVariable("body_UD", (float) _deltaY, frameCount, easing);
+                            _player.SetVariable("body_LR", (float) _deltaX, frameCount, easing);
+                            _player.SetVariable("face_eye_UD", (float) _deltaY, frameCount, easing);
+                            _player.SetVariable("face_eye_LR", (float) _deltaX, frameCount, easing);
+                        }
                     }
                 }
+            }
+            if (e.LeftButton == MouseButtonState.Pressed && canmove)
+            {   
+                this.DragMove(); 
+
+                //Properties.Settings.Default.MainRestoreBounds = this.RestoreBounds;
+                //Properties.Settings.Default.MainWindowState = this.WindowState;
+                Properties.Settings.Default.Save();
             }
 
             UpdatePosition();
@@ -245,6 +324,8 @@ namespace FreeMote.Tools.Viewer
             var (wx, wy) = CharacterWorldToWindowWorld(cx, cy);
             UpdateCharaMark(wx, wy);
             Title = $"Project AZUSA © FreeMote Viewer - Center: {-cx:F2},{-cy:F2} Mouse: {mx:F2},{my:F2}";
+
+
         }
 
         private void UpdateCharaMark(double wx, double wy)
@@ -400,6 +481,8 @@ namespace FreeMote.Tools.Viewer
 
         private void GetTimelines(object sender, RoutedEventArgs e)
         {
+            MotionisOn = !MotionisOn;
+            //Console.WriteLine(MotionisOn);
             if (MotionPanel.Children.Count > 0)
             {
                 if (MotionPanel.Visibility == Visibility.Visible)
@@ -463,14 +546,102 @@ namespace FreeMote.Tools.Viewer
                     ? TimelinePlayFlags.TIMELINE_PLAY_DIFFERENCE
                     : TimelinePlayFlags.NONE);
         }
-
+        //private void Window_MouseDown(object sender, MouseButtonEventArgs e){}
         private void Stop(object sender, RoutedEventArgs e)
         {
             _player.StopTimeline("");
             _player.Skip();
             _player.SetVariable("fade_z", 256);
         }
+        private void Desktopmod(object sender, RoutedEventArgs e)
+        {
+            //this.Desktopmod.Text="laaa";
+            foreach (object child in Panel2.Children)
+            {
+                if (child is Button  )
+                {
+                    ((Button) child).IsEnabled = !((Button) child).IsEnabled;
+                }
+            }
+            Panel2.Opacity = 1 - Panel2.Opacity;
+        }
+        private void TransparenButton(object sender, RoutedEventArgs e)
+        {            
+            if (TransparenisOn) {
+                TransparenisOn = false;
+                ((Button) sender).Opacity = 1;
+            }
+            else { 
+                TransparenisOn = true;
+                ((Button) sender).Opacity = 0.1; ;
+            }
 
+            foreach (object child in Panel1.Children)
+            {
+                if (child is Button)
+                {
+                    //((Button) child).Opacity = 1 - ((Button) child).Opacity;
+                    ((Button) child).IsEnabled = !((Button) child).IsEnabled;
+                }
+            }Panel1.Opacity=1-Panel1.Opacity;
+            foreach (object child in Panel2.Children)
+            {
+                if (child is Button)
+                {
+                    string temp = (string) (child as Button).Content;
+                    if (temp != "隐藏按钮")
+                    {
+                        ((Button) child).Opacity = 1 - ((Button) child).Opacity;
+                        ((Button) child).IsEnabled = !((Button) child).IsEnabled;
+                    }
+                }
+            }
+            
+        }
+        private void topmost(object sender, RoutedEventArgs e)
+        {
+            Topmost = !Topmost;
+            if (!Topmost)
+            {
+                ((Button) sender).Content = "无置顶";
+            }
+            else
+            {
+                //Panel1.gua;
+                ((Button) sender).Content = "置顶";
+            }
+            
+        }
+        private void Move(object sender, RoutedEventArgs e)
+        {
+            
+            if (canmove)
+            {
+                ((Button) sender).Content = "移动";
+            }
+            else
+            {
+                ((Button) sender).Content = "正在";
+            }canmove = !canmove;
+        }
+        private void SavePosition(object sender, RoutedEventArgs e)//保存位移
+        {
+            _player.GetCoord(out float cx, out float cy);
+            //var (wx, wy) = CharacterWorldToWindowWorld(cx, cy);
+            Properties.Settings.Default.X_Position = cx;
+            Properties.Settings.Default.Y_Position = cy;
+            Properties.Settings.Default.zoom= _player.GetScale();
+            //Console.WriteLine(Properties.Settings.Default.X_Position);
+            Properties.Settings.Default.Save();
+        }
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            //保存当前位置、大小和状态，到配置文件
+            Properties.Settings.Default.MainRestoreBounds = this.RestoreBounds;
+            Properties.Settings.Default.MainWindowState = this.WindowState;
+            Properties.Settings.Default.Save();
+
+        }
         private void Clear(object sender, RoutedEventArgs e)
         {
             for (uint i = 0; i < _player.CountVariables(); i++)

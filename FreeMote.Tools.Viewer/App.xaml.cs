@@ -14,8 +14,8 @@ namespace FreeMote.Tools.Viewer
 {
     public static class Core
     {
-        public static uint Width { get; set; } = 1280;
-        public static uint Height { get; set; } = 720;
+        public static uint Width { get; set; } = 540;
+        public static uint Height { get; set; } = 960;
         public static bool DirectLoad { get; set; } = false;
         public static List<string> PsbPaths { get; set; }
         internal static bool NeedRemoveTempFile { get; set; } = false;
